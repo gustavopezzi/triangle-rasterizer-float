@@ -75,10 +75,10 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
   float delta_beta_row  = (v0.x - v2.x) / area;
   float delta_gamma_row = (v1.x - v0.x) / area;
 
-  // Rasterization fill convention (top-left rule) - not 100% correct due to floating point innacuracy!
-  float bias0 = is_top_left(&v1, &v2) ? -0.0005 : 0;
-  float bias1 = is_top_left(&v2, &v0) ? -0.0005 : 0;
-  float bias2 = is_top_left(&v0, &v1) ? -0.0005 : 0;
+  // Rasterization fill rule, not 100% accurate due to floating point precision issues
+  float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+  float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+  float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
 
   // Compute the edge functions for the fist (top-left) point
   vec2_t p0 = { x_min + 0.5f , y_min + 0.5f };
@@ -121,7 +121,7 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
 void render(void) {
   clear_framebuffer(0xFF000000);
 
-  float angle = SDL_GetTicks() / 1000.0f * 0.2;
+  float angle = SDL_GetTicks() / 1000.0f * 0.1;
 
   vec2_t center = { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
 

@@ -68,33 +68,36 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
   float area = edge_cross(&v0, &v1, &v2);
 
   // Compute the constant delta_s that will be used for the horizontal and vertical steps
-  float delta_alpha_col = (v1.y - v2.y) / area;
-  float delta_beta_col  = (v2.y - v0.y) / area;
-  float delta_gamma_col = (v0.y - v1.y) / area;
-  float delta_alpha_row = (v2.x - v1.x) / area;
-  float delta_beta_row  = (v0.x - v2.x) / area;
-  float delta_gamma_row = (v1.x - v0.x) / area;
+  float delta_w0_col = (v1.y - v2.y);
+  float delta_w1_col = (v2.y - v0.y);
+  float delta_w2_col = (v0.y - v1.y);
+  float delta_w0_row = (v2.x - v1.x);
+  float delta_w1_row = (v0.x - v2.x);
+  float delta_w2_row = (v1.x - v0.x);
 
-  // Rasterization fill rule, not 100% accurate due to floating point precision issues
+  // Rasterization fill rule, not 100% precise due to floating point innacuracy
   float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
   float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
   float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
 
   // Compute the edge functions for the fist (top-left) point
   vec2_t p0 = { x_min + 0.5f , y_min + 0.5f };
-  float alpha_row = (edge_cross(&v1, &v2, &p0) + bias0) / area;
-  float beta_row  = (edge_cross(&v2, &v0, &p0) + bias1) / area;
-  float gamma_row = (edge_cross(&v0, &v1, &p0) + bias2) / area;
+  float w0_row = edge_cross(&v1, &v2, &p0) + bias0;
+  float w1_row = edge_cross(&v2, &v0, &p0) + bias1;
+  float w2_row = edge_cross(&v0, &v1, &p0) + bias2;
 
   // Loop all candidate pixels inside the bounding box
   for (int y = y_min; y <= y_max; y++) {
-    float alpha = alpha_row;
-    float beta  = beta_row;
-    float gamma = gamma_row;
+    float w0 = w0_row;
+    float w1 = w1_row;
+    float w2 = w2_row;
     for (int x = x_min; x <= x_max; x++) {
-      bool is_inside = alpha >= 0 && beta >= 0 && gamma >= 0;
-      
+      bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
       if (is_inside) {
+        float alpha = w0 / area;
+        float beta  = w1 / area;
+        float gamma = w2 / area;
+        
         int a = 0xFF;
         int r = (alpha) * colors[0].r + (beta) * colors[1].r + (gamma) * colors[2].r;
         int g = (alpha) * colors[0].g + (beta) * colors[1].g + (gamma) * colors[2].g;
@@ -108,13 +111,13 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
 
         draw_pixel(x, y, interp_color);
       }
-      alpha += delta_alpha_col;
-      beta  += delta_beta_col;
-      gamma += delta_gamma_col;
+      w0 += delta_w0_col;
+      w1 += delta_w1_col;
+      w2 += delta_w2_col;
     }
-    alpha_row += delta_alpha_row;
-    beta_row  += delta_beta_row;
-    gamma_row += delta_gamma_row;
+    w0_row += delta_w0_row;
+    w1_row += delta_w1_row;
+    w2_row += delta_w2_row;
   }
 }
 
